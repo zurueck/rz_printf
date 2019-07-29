@@ -20,8 +20,8 @@ void rz_putchar(S32 c) {
 *
 */
 //%[flags] [width] [.precision] [length] specifier
-U32 rz_printf(char * myStr, ...) {
-    S8            strBuff[512] = {0};
+U32 rz_printf(const char * myStr, ...) {
+    S8            strBuff[256] = {0};
     U32           strBuffSize;
 
     strBuffSize = rz_vsprintf((S8*)strBuff, (S8*)myStr, (S8*)(((S8*)&myStr)+4));
@@ -29,6 +29,8 @@ U32 rz_printf(char * myStr, ...) {
     for (int m = 0; m<strBuffSize; m++) {
         rz_putchar(strBuff[m]);
     }
+
+    return strBuffSize;
 }
 
 U32 rz_vsprintf(S8* des, S8* begin, S8* argAddr) {
@@ -39,9 +41,9 @@ U32 rz_vsprintf(S8* des, S8* begin, S8* argAddr) {
     S32 width = 0;
     S32 prec = 0;
     S32 leng = 0;
-    U8 base;
-    S8 strTmp[512] = {0};
-    S8 inStrTmp[512] = {0};
+    U8 base = 0;
+    S8 strTmp[256] = {0};
+    S8 inStrTmp[256] = {0};
     S64 s64tmp = 0;
     U32 argType = 0;
     U64 u64tmp = 0;
@@ -49,7 +51,7 @@ U32 rz_vsprintf(S8* des, S8* begin, S8* argAddr) {
     U32 u32tmp = 0;
     S32 lengTmp = 0;
     S32 strLeng = 0;
-    S8  s8tmp = 0;
+    //S8  s8tmp = 0;
     S8* s8ptmp = 0;
     U8 sign = 0;
     double f64Tmp = 0.0;
@@ -61,9 +63,7 @@ U32 rz_vsprintf(S8* des, S8* begin, S8* argAddr) {
 
     while (*src != 0) {
         if (*src != '%') {
-            *desP = *src;
-            desP++;
-            src++;
+            *desP++ = *src++;
             continue;
         }
 
@@ -300,8 +300,10 @@ LEAVE_FLAG:
         } else if (argType & _ARG_TYPE_D) {
             continue;
         } else if (argType & _ARG_TYPE_N) {
-            rz_memCpy(desP, strTmp, strLeng);
-            desP += strLeng;
+            //rz_memCpy(desP, strTmp, strLeng);
+            rz_memCpy(desP, inStrTmp, lengTmp);
+            //desP += strLeng;
+            desP += lengTmp;
             src++;
             continue;       //try to remove later
         } else {            //ARG_TYPE_N
@@ -374,6 +376,8 @@ LEAVE_FLAG:
         desP += strLeng;
         src++;
     }
+
+    return desP - des;
 }
 
 
