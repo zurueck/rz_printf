@@ -1,14 +1,22 @@
 /***************************************************************************//**
  * @author  youmin
- * @data    20190624
- * @version 0.0.1
+ * @data    20190814
+ * @version 0.0.3
  *
  ******************************************************************************/
 #include "rz_printf.h"
 
 
-void rz_putchar(S32 c) {
+void (*rz_putchar)(S8);         //function pointer to be initialized
 
+void rz_printf_init(void *(put)(S8)) {
+
+    rz_putchar = put;
+}
+
+U32 rz_sprintf(char *des, const char * myFormat, ...) {
+
+    return rz_vsprintf((S8*)des, (S8*)myFormat, (S8*)(((S8*)&myFormat)+4));
 }
 
 /**
@@ -19,77 +27,75 @@ void rz_putchar(S32 c) {
 * 3. string size is 25, can be changed
 *
 */
-//%[flags] [width] [.precision] [length] specifier
+//format %[flags] [width] [.precision] [length] [specifier]
 U32 rz_printf(const char * myStr, ...) {
-    S8            strBuff[256] = {0};
+    S8            strBuff[RZ_PRINTF_BUFFER_SIZE] = {0};
     U32           strBuffSize;
 
     strBuffSize = rz_vsprintf((S8*)strBuff, (S8*)myStr, (S8*)(((S8*)&myStr)+4));
 
     for (int m = 0; m<strBuffSize; m++) {
-        rz_putchar(strBuff[m]);
+        (*rz_putchar)(strBuff[m]);
     }
 
     return strBuffSize;
 }
 
+//format %[flags] [width] [.precision] [length] [specifier]
 U32 rz_vsprintf(S8* des, S8* begin, S8* argAddr) {
-    S8* src = 0;
-    S8* desP = 0;
-    S8* argP = 0;
-    U32 flags = 0;
-    S32 width = 0;
-    S32 prec = 0;
-    S32 leng = 0;
-    U8 base = 0;
-    S8 strTmp[256] = {0};
-    S8 inStrTmp[256] = {0};
-    S64 s64tmp = 0;
+    S8* srcP = begin;
+    S8* desP = des;
+    S8* argP = (S8*)argAddr;
+    U32 flags = 0;      //printf format
+    S32 width = 0;      //printf format
+    S32 prec = 0;       //printf format
+    S32 leng = 0;       //printf format
+    U8 base = 0;        //printf format in specifier
+    U8 sign = 0;        //positive/negative number
+
     U32 argType = 0;
-    U64 u64tmp = 0;
-    S32 s32tmp = 0;
-    U32 u32tmp = 0;
+
+    S8* fragSta = 0;    //specifier fragment start position in *des string
+    S8  fragLeng = 0;    //fragment length 
+
+    S8 xtoaFlag = 0;
+
+    U64 tmpPos;         //buffer
+    void* vpTmp = (void*)&tmpPos;
     S32 lengTmp = 0;
-    S32 strLeng = 0;
-    //S8  s8tmp = 0;
-    S8* s8ptmp = 0;
-    U8 sign = 0;
-    double f64Tmp = 0.0;
 
-
-    desP = des;
-    src = begin;
-    argP = (S8*)argAddr;
-
-    while (*src != 0) {
-        if (*src != '%') {
-            *desP++ = *src++;
+    while (*srcP != 0) {
+        if (*srcP != '%') {
+            *desP++ = *srcP++;
             continue;
         }
+        srcP++;
 
-        src++;
+        fragSta = desP = desP;
+        xtoaFlag = fragLeng = 0;
+
         //flags
         while (1) {
-            switch (*src) {    //'0', '-', '+', ' ', '#'
+            switch (*srcP) {    //'0', '-', '+', ' ', '#'
                 case '0':
                     flags |= _FLAG_ZERO_PAD;
-                    src++;
+                    srcP++;
                     break;
                 case '-':
                     flags |= _FLAG_LEFT;
-                    src++;
+                    srcP++;
                     break;
                 case '+':
                     flags |= _FLAG_SIGN;
-                    src++;
+                    srcP++;
                     break;
                 case ' ':
                     flags |= _FLAG_SPACE;
-                    src++;
+                    srcP++;
                     break;
                 case '#':
                     flags |= _FLAG_0X;
-                    src++;
+                    srcP++;
                     break;
                 default:
                     goto LEAVE_FLAG;
@@ -98,38 +104,38 @@ U32 rz_vsprintf(S8* des, S8* begin, S8* argAddr) {
 LEAVE_FLAG:
         
         //width
-        width = rz_getFormatArg(&src, &argP);
+        width = rz_getFormatArg(&srcP, &argP);
         if (width < 0) {
             flags |= _FLAG_LEFT;
             width = -width;
         }
 
         //precision
-        if (*src == '.') {
+        if (*srcP == '.') {
             flags |= _FLAG_PRECISION;
-            src++;
-            prec = rz_getFormatArg(&src, &argP);
+            srcP++;
+            prec = rz_getFormatArg(&srcP, &argP);
             if (prec < 0) {
                 prec = 0;
             }
         }
 
         //length
-        switch (*src) {
+        switch (*srcP) {
             case 'l':                   //long int
                 leng |= _FLAG_LONG;
-                src++;
-                if (*src == 'l') {      //C99
+                srcP++;
+                if (*srcP == 'l') {      //C99
                     leng |= _FLAG_LONG_LONG;
-                    src++;
+                    srcP++;
                 }
                 break;
             case 'h':
                 leng |= _FLAG_SHORT;
-                src++;
-                if (*src == 'h') {      //C99
+                srcP++;
+                if (*srcP == 'h') {      //C99
                     leng |= _FLAG_CHAR;
-                    src++;
+                    srcP++;
                 }
                 break;
             case 'j':                   //C99
@@ -144,7 +150,7 @@ LEAVE_FLAG:
         }
 
         //specifier
-        switch (*src) {
+        switch (*srcP) {
             case 'i':
             case 'd':
                 base = 10;
@@ -214,9 +220,9 @@ LEAVE_FLAG:
                 flags &= ~_FLAG_SPACE;
                 flags &= ~_FLAG_SIGN;
                 flags &= ~_FLAG_0X;
-                s8ptmp = (S8*)*(unsigned int*)argP;
+                vpTmp = (void*)*(unsigned int*)argP;
                 argP += 4;
-                lengTmp = rz_strlen(s8ptmp);
+                lengTmp = rz_strlen((S8*)vpTmp);
 
                 if (flags & _FLAG_PRECISION) {
                     if (lengTmp > prec) {
@@ -231,7 +237,7 @@ LEAVE_FLAG:
                 }
 
                 for (int m = 0; m<lengTmp; m++) {
-                    *(inStrTmp+m) = *s8ptmp++;
+                    *desP++ = *(S8*)vpTmp++;
                 }
 
                 argType |= _ARG_TYPE_N;     //done
@@ -242,7 +248,7 @@ LEAVE_FLAG:
             case '%':
                 *desP = '%';
                 desP++;
-                src++;
+                srcP++;
                 argType |= _ARG_TYPE_D;     //done
                 break;
             default:
@@ -252,26 +258,30 @@ LEAVE_FLAG:
 
         if (argType & _ARG_TYPE_S) {
             if (flags & _FLAG_LONG_LONG) {
-                s64tmp = *(long long*)argP;
+                *(S64*)vpTmp = *(long long*)argP;
                 argP += 8;
-                if (s64tmp < 0) {
+                if (*(S64*)vpTmp < 0) {
                     sign = 1;
-                    u64tmp = -s64tmp;
+                    *(U64*)vpTmp = -*(S64*)vpTmp;
                 }
-                lengTmp = rz_itoa64(u64tmp, inStrTmp, base);
+                lengTmp = rz_itoa64(*(U64*)vpTmp, desP, base);
+                desP += lengTmp;
+                xtoaFlag = 1;
             } else {
-                s32tmp = *(int*)argP;
+                *(S32*)vpTmp = *(S32*)argP;
                 argP += 4;
-                if (s32tmp < 0) {
+                if (*(S32*)vpTmp < 0) {
                     sign = 1;
-                    u32tmp = -s32tmp;
+                    *(U32*)vpTmp = -*(S32*)vpTmp;
                 } else {
-                    u32tmp = s32tmp;
+                    *(U32*)vpTmp = *(S32*)vpTmp;
                 }
-                lengTmp = rz_itoa(u32tmp, inStrTmp, base);
+                lengTmp = rz_itoa(*(U32*)vpTmp, desP, base);
+                desP += lengTmp;
+                xtoaFlag = 1;
             }
         } else if (argType & _ARG_TYPE_F) {
-            f64Tmp = *(double*)argP;
+            *(double*)vpTmp = *(double*)argP;
             argP += 8;
             flags &= ~_FLAG_0X;
             if (!(flags & _FLAG_PRECISION)) {
@@ -282,29 +292,30 @@ LEAVE_FLAG:
                 flags &= ~_FLAG_ZERO_PAD;
             }
 
-            lengTmp = rz_ftoa(f64Tmp, inStrTmp, prec);
+            lengTmp = rz_ftoa(*(double*)vpTmp, desP, prec);
+            desP += lengTmp;
+            xtoaFlag = 1;
 
-            //if ((width-lengTmp) > 0) {
-            //    pad = 1;
-            //}
         } else if (argType & _ARG_TYPE_U) {
             if (flags & _FLAG_LONG_LONG) {
-                u64tmp = *(unsigned long long*)argP;
+                *(U64*)vpTmp = *(unsigned long long*)argP;
                 argP += 8;
-                lengTmp = rz_itoa64(u64tmp, inStrTmp, base);
+                argP += 8;
+                lengTmp = rz_itoa64(*(U64*)vpTmp, desP, base);
+                desP += lengTmp;
+                xtoaFlag = 1;
             } else {
-                u32tmp = *(unsigned long long*)argP;
+                *(U32*)vpTmp = *(unsigned int*)argP;
                 argP += 4;
-                lengTmp = rz_itoa(u32tmp, inStrTmp, base);
+                lengTmp = rz_itoa(*(U32*)vpTmp, desP, base);
+                desP += lengTmp;
+                xtoaFlag = 1;
             }
         } else if (argType & _ARG_TYPE_D) {
             continue;
         } else if (argType & _ARG_TYPE_N) {
-            //rz_memCpy(desP, strTmp, strLeng);
-            rz_memCpy(desP, inStrTmp, lengTmp);
-            //desP += strLeng;
             desP += lengTmp;
-            src++;
+            srcP++;
             continue;       //try to remove later
         } else {            //ARG_TYPE_N
             //do nothing
@@ -312,14 +323,32 @@ LEAVE_FLAG:
 
         if (flags & _FLAG_SIGN) {
             if (sign) {
-                strTmp[strLeng] = '-';
+                if (xtoaFlag) {
+                    rz_strRev(fragSta, lengTmp);
+                }
+                *desP++ = '-';
+                if (xtoaFlag) {
+                    rz_strRev(fragSta, lengTmp + 1);
+                }
             } else {
-                strTmp[strLeng] = '+';
+                if (xtoaFlag) {
+                    rz_strRev(fragSta, lengTmp);
+                }
+                *desP++ = '+';
+                if (xtoaFlag) {
+                    rz_strRev(fragSta, lengTmp + 1);
+                }
             }
-            strLeng++;
+            fragLeng++;
         } else if (flags & _FLAG_SPACE) {
-            strTmp[strLeng] = ' ';
-            strLeng++;
+            if (xtoaFlag) {
+                rz_strRev(fragSta, lengTmp);
+            }
+            *desP++ = ' ';
+            if (xtoaFlag) {
+                rz_strRev(fragSta, lengTmp + 1);
+            }
+            fragLeng++;
         }
 
         //add 0
@@ -329,52 +358,59 @@ LEAVE_FLAG:
                 prec = lengTmp;
             }
             if (prec-lengTmp > 0) {
-                for (int m = 0; m<prec-lengTmp; m++) {
-                    strTmp[strLeng + m] = '0';
+                if (xtoaFlag) {
+                    rz_strRev(fragSta, lengTmp);
                 }
-                strLeng += prec - lengTmp;
+                for (int m = 0; m<prec-lengTmp; m++) {
+                    *desP++ = '0';
+                }
+                if (xtoaFlag) {
+                    rz_strRev(fragSta, lengTmp + prec-lengTmp);
+                }
+                fragLeng += prec - lengTmp;
             }
         }
 
         if (flags & _FLAG_0X) {
-            strTmp[strLeng] = 'x';
-            strLeng++;
-            strTmp[strLeng] = '0';
-            strLeng++;
+            if (xtoaFlag) {
+                rz_strRev(fragSta, lengTmp);
+            }
+            *desP++ = 'x';
+            fragLeng++;
+            *desP++ = '0';
+            fragLeng++;
+            if (xtoaFlag) {
+                rz_strRev(fragSta, lengTmp + 2);
+            }
         }
 
         if (flags & _FLAG_ZERO_PAD) {
-            for (int m = 0; m<width-lengTmp-strLeng; m++) {
-                strTmp[strLeng+m] = '0';
+            for (int m = 0; m<width-lengTmp-fragLeng; m++) {
+                *desP++ = '0';
             }
-            strLeng += prec-lengTmp-strLeng;
+            fragLeng += prec-lengTmp-fragLeng;
         }
 
         // add string
-        for (int m = 0; m<lengTmp; m++) {
-            strTmp[strLeng+m] = inStrTmp[m];
-        }
-        strLeng += lengTmp;
+        fragLeng += lengTmp;
 
-        if (width > strLeng) {
+        if (width > fragLeng) {
             if (flags & _FLAG_LEFT) {
-                for (int m = 0; m<(width-strLeng); m++) {
-                    strTmp[strLeng+m] = ' ';
+                for (int m = 0; m<(width-fragLeng); m++) {
+                    *desP++ = ' ';
                 }
-                strLeng += width-strLeng;
+                fragLeng += width - fragLeng;
             } else {
-                rz_strRev(strTmp, strLeng);
-                for (int m = 0; m<(width-strLeng); m++) {
-                    strTmp[strLeng+m] = ' ';
+                rz_strRev(fragSta, fragLeng);
+                for (int m = 0; m<(width-fragLeng); m++) {
+                    *desP++ = ' ';
                 }
-                strLeng += width-strLeng;
-                rz_strRev(strTmp, strLeng);
+                fragLeng += width - fragLeng;
+                rz_strRev(fragSta, fragLeng);
             }
         }
 
-        rz_memCpy(desP, strTmp, strLeng);
-        desP += strLeng;
-        src++;
+        srcP++;
     }
 
     return desP - des;
@@ -519,10 +555,7 @@ U32 rz_getFormatArg(S8 **src, S8** argP) {
     }
 
     return tmp;
-
 }
-
-
 
 
 

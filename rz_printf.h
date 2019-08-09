@@ -1,12 +1,19 @@
 /***************************************************************************//**
  * @file    rz_printf.h
  * @author 	Youmin
- * @data    20190624
- * @version 0.0.1
+ * @data    20190814
+ * @version 0.0.3
  *
  ******************************************************************************/
 #ifndef RZ_PRINTF_H
 #define RZ_PRINTF_H
+
+// ==================================================
+//                  configuration
+// ==================================================
+#define RZ_PRINTF_BUFFER_SIZE   512
+
+
 
  // ==================================================
  //                  type define
@@ -14,7 +21,7 @@
 #if 1
 #define FIRMWARE_VERSION_MAJOR       ('0')
 #define FIRMWARE_VERSION_MINOR       ('0')
-#define FIRMWARE_VERSION_PATCH       ('1')
+#define FIRMWARE_VERSION_PATCH       ('3')
 
 #define U8      unsigned char
 #define U16     unsigned short
@@ -40,17 +47,18 @@
 #define _FLAG_LONG_DOUBLE   0x400
 #define _FLAG_PRECISION     0x800
 #define _FLAG_UPPERCASE     0x1000
-#define _ARG_TYPE_S         0x10000
-#define _ARG_TYPE_F         0x20000
-#define _ARG_TYPE_U         0x40000
-#define _ARG_TYPE_N         0X80000
-#define _ARG_TYPE_D         0X100000
+#define _ARG_TYPE_S         0x10000         //signed
+#define _ARG_TYPE_F         0x20000         //float
+#define _ARG_TYPE_U         0x40000         //unsigned
+#define _ARG_TYPE_N         0X80000         //one string -> direct over
+#define _ARG_TYPE_D         0X100000        //one arg -> direct over
 
 // ==================================================
 //                  prototypes
 // ==================================================
-void rz_putchar(S32 c);
+void rz_printf_init(void *(put)(S8));
 U32 rz_printf(const S8 * myStr, ...);
+U32 rz_sprintf(char *des, const char * myFormat, ...);
 U32 rz_vsprintf(S8* des, S8* begin, S8* argAddr);
 
 void rz_memset(S8* str, S32 value, U32 size);
@@ -62,7 +70,7 @@ U32 rz_itoa(U32 val, S8* buf, U8 base);
 U32 rz_itoa64(U64 val, S8* buf, U8 base);
 U32 rz_ftoa(double f, S8* buf, U8 prec);
 
-int rz_isDigit(S8 c);
+U32 rz_isDigit(S8 c);
 U32 rz_strlen(const S8* str);
 U32 rz_strRev(S8* str, U32 size);
 U32 rz_getFormatArg(S8 **src, S8** argP);

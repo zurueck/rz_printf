@@ -16,10 +16,24 @@ void dbg_printf(char* str, ...) {
     rz_vsprintf(g_strBuff, str, ((char*)&str)+4);
 }
 
+void gg(S8 c) {
+
+    printf("%c", c);
+}
+
+
 int main(int argc, char *argv[]) {
+    char stt[100] = "wtw +312_1e4rfg8h";
     
-    
+    rz_printf_init(gg);
+    rz_printf("%s", stt);
+    //dbg_printf("%s", stt);
+    //printf("%s", g_strBuff);
+    //test_s();
+    test_d();
+    test_f();
     test_x();
+    
     
     return 0;
 }
@@ -123,8 +137,8 @@ void test_f(){
                     PR_STR(%+-04.6f, f1),
                     PR_STR(%+- 4.6f, f1),
                     PR_STR(%+- 04.6f, f1),  //78
-                    
-                
+                    PR_STR(%#f, f1),
+                    PR_STR(%# f, f1),       //80
       };
  
     //0
@@ -145,7 +159,6 @@ void test_f(){
         }
         k++;
     }
-    
     
     printf("[%d] = %s ......", k, f_str[k]);{memset((void*)g_strBuff, 0, 1024);memset((void*)g_strBuff2, 0, 1024);
         dbg_printf("%+f", f1);
@@ -632,10 +645,19 @@ void test_f(){
     printf("%+- 04.6f\r\n", f1);printf("\r\n");}k++;}       
 
    
-    
-    
+    printf("[%d] = %s ......", k, f_str[k]);{memset((void*)g_strBuff, 0, 1024);memset((void*)g_strBuff2, 0, 1024);
+    dbg_printf("%#f", f1);
+    sprintf (g_strBuff2, "%#f", f1);res = strcmp(g_strBuff, g_strBuff2);if (res == 0) {printf("PASS\r\n", k);} else {printf("FAIL:\r\n", k, f_str[k]);
+    rz_printf("%#f\r\n", f1);
+    printf("%#f\r\n", f1);printf("\r\n");}k++;}       
 
+    printf("[%d] = %s ......", k, f_str[k]);{memset((void*)g_strBuff, 0, 1024);memset((void*)g_strBuff2, 0, 1024);
+    dbg_printf("%# f", f1);
+    sprintf (g_strBuff2, "# f", f1);res = strcmp(g_strBuff, g_strBuff2);if (res == 0) {printf("PASS\r\n", k);} else {printf("FAIL:\r\n", k, f_str[k]);
+    rz_printf("%# f\r\n", f1);
+    printf("%# f\r\n", f1);printf("\r\n");}k++;}       
 }
+
 
 void test_d(){
     int res = 0;
@@ -680,6 +702,9 @@ void test_d(){
 
             PR_STR(%+08d, i1),  //30
             PR_STR(%+ 08d, i1),
+
+            PR_STR(%#d, i1),    
+            PR_STR(%#.3d, i1),
         };
 
     //0
@@ -893,6 +918,19 @@ void test_d(){
     rz_printf("%+ 08d\r\n", i1);
     printf("%+ 08d\r\n", i1);printf("\r\n");}k++;}         
             
+    printf("[%d] = %s ......", k, i_str[k]);{memset((void*)g_strBuff, 0, 1024);memset((void*)g_strBuff2, 0, 1024);
+    dbg_printf("%#d", i1);
+    sprintf (g_strBuff2, "%#d", i1);res = strcmp(g_strBuff, g_strBuff2);if (res == 0) {printf("PASS\r\n", k);} else {printf("FAIL:\r\n", k, i_str[k]);
+    rz_printf("%#d\r\n", i1);
+    printf("%#d\r\n", i1);printf("\r\n");}k++;}         
+            
+
+    printf("[%d] = %s ......", k, i_str[k]);{memset((void*)g_strBuff, 0, 1024);memset((void*)g_strBuff2, 0, 1024);
+    dbg_printf("%#.3d", i1);
+    sprintf (g_strBuff2, "%#.3d", i1);res = strcmp(g_strBuff, g_strBuff2);if (res == 0) {printf("PASS\r\n", k);} else {printf("FAIL:\r\n", k, i_str[k]);
+    rz_printf("%#.3d\r\n", i1);
+    printf("%#.3d\r\n", i1);printf("\r\n");}k++;}         
+
 }
 
 void test_x(){
@@ -938,6 +976,20 @@ void test_x(){
 
             PR_STR(%+08x, x1),  //30
             PR_STR(%+ 08x, x1),
+
+            PR_STR(%#0x, x1),
+            PR_STR(%#5x, x1),
+            PR_STR(%#.4x, x1),
+            PR_STR(%#10.3x, x1), //35
+            PR_STR(%#-3x, x1),
+            PR_STR(%#-4x, x1),
+            PR_STR(%# 4x, x1),
+            PR_STR(%#06x, x1),
+            PR_STR(%#+08x, x1),  //40 
+            PR_STR(%#+ 08x, x1),
+
+
+
         };
 
   printf("[%d] = %s ......", k, x_str[k]);
@@ -1150,8 +1202,73 @@ void test_x(){
     rz_printf("%+ 08x\r\n", x1);
     printf("%+ 08x\r\n", x1);printf("\r\n");}k++;}         
             
+    printf("[%d] = %s ......", k, x_str[k]);{memset((void*)g_strBuff, 0, 1024);memset((void*)g_strBuff2, 0, 1024);
+    dbg_printf("%#0x", x1);
+    sprintf (g_strBuff2, "%#0x", x1);res = strcmp(g_strBuff, g_strBuff2);if (res == 0) {printf("PASS\r\n", k);} else {printf("FAIL:\r\n", k, x_str[k]);
+    rz_printf("%#0x\r\n", x1);
+    printf("%#0x\r\n", x1);printf("\r\n");}k++;}         
+            
+    printf("[%d] = %s ......", k, x_str[k]);{memset((void*)g_strBuff, 0, 1024);memset((void*)g_strBuff2, 0, 1024);
+    dbg_printf("%#5x", x1);
+    sprintf (g_strBuff2, "%#5x", x1);res = strcmp(g_strBuff, g_strBuff2);if (res == 0) {printf("PASS\r\n", k);} else {printf("FAIL:\r\n", k, x_str[k]);
+    rz_printf("%#5x\r\n", x1);
+    printf("%#5x\r\n", x1);printf("\r\n");}k++;}         
 
+    printf("[%d] = %s ......", k, x_str[k]);{memset((void*)g_strBuff, 0, 1024);memset((void*)g_strBuff2, 0, 1024);
+    dbg_printf("%#.4x", x1);
+    sprintf (g_strBuff2, "%#.4x", x1);res = strcmp(g_strBuff, g_strBuff2);if (res == 0) {printf("PASS\r\n", k);} else {printf("FAIL:\r\n", k, x_str[k]);
+    rz_printf("%#.4x\r\n", x1);
+    printf("%#.4x\r\n", x1);printf("\r\n");}k++;}         
 
+    //35
+    printf("[%d] = %s ......", k, x_str[k]);{memset((void*)g_strBuff, 0, 1024);memset((void*)g_strBuff2, 0, 1024);
+    dbg_printf("%#10.3x", x1);
+    sprintf (g_strBuff2, "%#10.3x", x1);res = strcmp(g_strBuff, g_strBuff2);if (res == 0) {printf("PASS\r\n", k);} else {printf("FAIL:\r\n", k, x_str[k]);
+    rz_printf("%#10.3x\r\n", x1);
+    printf("%#10.3x\r\n", x1);printf("\r\n");}k++;}         
+
+    printf("[%d] = %s ......", k, x_str[k]);{memset((void*)g_strBuff, 0, 1024);memset((void*)g_strBuff2, 0, 1024);
+    dbg_printf("%#-3x", x1);
+    sprintf (g_strBuff2, "%#-3x", x1);res = strcmp(g_strBuff, g_strBuff2);if (res == 0) {printf("PASS\r\n", k);} else {printf("FAIL:\r\n", k, x_str[k]);
+    rz_printf("%#-3x\r\n", x1);
+    printf("%#-3x\r\n", x1);printf("\r\n");}k++;}         
+
+    printf("[%d] = %s ......", k, x_str[k]);{memset((void*)g_strBuff, 0, 1024);memset((void*)g_strBuff2, 0, 1024);
+    dbg_printf("%#-4x", x1);
+    sprintf (g_strBuff2, "%#-4x", x1);res = strcmp(g_strBuff, g_strBuff2);if (res == 0) {printf("PASS\r\n", k);} else {printf("FAIL:\r\n", k, x_str[k]);
+    rz_printf("%#-4x\r\n", x1);
+    printf("%#-4x\r\n", x1);printf("\r\n");}k++;}         
+
+    printf("[%d] = %s ......", k, x_str[k]);{memset((void*)g_strBuff, 0, 1024);memset((void*)g_strBuff2, 0, 1024);
+    dbg_printf("%# 4x", x1);
+    sprintf (g_strBuff2, "%# 4x", x1);res = strcmp(g_strBuff, g_strBuff2);if (res == 0) {printf("PASS\r\n", k);} else {printf("FAIL:\r\n", k, x_str[k]);
+    rz_printf("%# 4x\r\n", x1);
+    printf("%# 4x\r\n", x1);printf("\r\n");}k++;}         
+
+    printf("[%d] = %s ......", k, x_str[k]);{memset((void*)g_strBuff, 0, 1024);memset((void*)g_strBuff2, 0, 1024);
+    dbg_printf("%#06x", x1);
+    sprintf (g_strBuff2, "%#06x", x1);res = strcmp(g_strBuff, g_strBuff2);if (res == 0) {printf("PASS\r\n", k);} else {printf("FAIL:\r\n", k, x_str[k]);
+    rz_printf("%#06x\r\n", x1);
+    printf("%#06x\r\n", x1);printf("\r\n");}k++;}         
+
+    //40
+    printf("[%d] = %s ......", k, x_str[k]);{memset((void*)g_strBuff, 0, 1024);memset((void*)g_strBuff2, 0, 1024);
+    dbg_printf("%#06x", x1);
+    sprintf (g_strBuff2, "%#06x", x1);res = strcmp(g_strBuff, g_strBuff2);if (res == 0) {printf("PASS\r\n", k);} else {printf("FAIL:\r\n", k, x_str[k]);
+    rz_printf("%#06x\r\n", x1);
+    printf("%#06x\r\n", x1);printf("\r\n");}k++;}         
+
+    printf("[%d] = %s ......", k, x_str[k]);{memset((void*)g_strBuff, 0, 1024);memset((void*)g_strBuff2, 0, 1024);
+    dbg_printf("%#+08x", x1);
+    sprintf (g_strBuff2, "%#+08x", x1);res = strcmp(g_strBuff, g_strBuff2);if (res == 0) {printf("PASS\r\n", k);} else {printf("FAIL:\r\n", k, x_str[k]);
+    rz_printf("%#+08x\r\n", x1);
+    printf("%#+08x\r\n", x1);printf("\r\n");}k++;}         
+
+    printf("[%d] = %s ......", k, x_str[k]);{memset((void*)g_strBuff, 0, 1024);memset((void*)g_strBuff2, 0, 1024);
+    dbg_printf("%#+ 08x", x1);
+    sprintf (g_strBuff2, "%#+ 08x", x1);res = strcmp(g_strBuff, g_strBuff2);if (res == 0) {printf("PASS\r\n", k);} else {printf("FAIL:\r\n", k, x_str[k]);
+    rz_printf("%#+ 08x\r\n", x1);
+    printf("%#+ 08x\r\n", x1);printf("\r\n");}k++;}         
 }
 
 void test_s(){
