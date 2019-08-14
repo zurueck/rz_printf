@@ -56,7 +56,7 @@
 // ==================================================
 //                  prototypes
 // ==================================================
-void rz_printf_init(void *(put)(S8));
+void rz_printf_init(void (*put)(S8));
 U32 rz_printf(const S8 * myStr, ...);
 U32 rz_sprintf(char *des, const char * myFormat, ...);
 U32 rz_vsprintf(S8* des, S8* begin, S8* argAddr);

@@ -9,7 +9,7 @@
 
 void (*rz_putchar)(S8);         //function pointer to be initialized
 
-void rz_printf_init(void *(put)(S8)) {
+void rz_printf_init(void (*put)(S8)) {
 
     rz_putchar = put;
 }
